@@ -1,0 +1,5 @@
+/resource/bert-base-uncased/config.json
+/resource/bert-base-uncased/pytorch_model.bin
+/resource/bert-base-uncased/README.md
+/resource/bert-base-uncased/vocab.txt
+.idea
