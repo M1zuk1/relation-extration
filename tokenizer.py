@@ -23,8 +23,8 @@ class Tokenizer(object):
     def load_tokenize(self):
         #  加载Bert分词器
         tokenizer = BertTokenizer.from_pretrained(self.ptlm_dir)
-        # 分词器中添加sepcial——tokens
-        special_tokens = ['<e1>', '</e1>', '<e2>', '</e2>']
+        # 分词器中添加sepcial——tokens,根据论文中将<e1></e1>,<e2></e2>改为$$和##
+        special_tokens = ['$', '#']
         special_tokens_dict = {'additional_special_tokens': special_tokens}
         tokenizer.add_special_tokens(special_tokens_dict)
         return tokenizer, special_tokens
@@ -40,7 +40,7 @@ class Tokenizer(object):
                 data = json.load(read_file)
                 for i in range(len(data)):
                    for token in data[i]['sentence']:
-                       if token in self.special_tokens:
+                       if token in ['<e1>', '</e1>', '<e2>', '</e2>']:
                            continue
                        vocab.add(token)
         return vocab

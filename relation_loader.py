@@ -32,4 +32,7 @@ class RelationLoader(object):
 if __name__ == '__main__':
     config = Config()
     relationloader = RelationLoader(config)
-    print(relationloader.get_relation())
+    rel2id, id2rel, class_num = relationloader.get_relation()
+    print(rel2id)
+    print(id2rel)
+    print(class_num)
