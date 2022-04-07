@@ -12,6 +12,7 @@ from relation_loader import RelationLoader
 from tokenizer import Tokenizer
 from tqdm import tqdm
 import numpy as np
+from torch.utils.data import Dataset,DataLoader
 
 '''
 构建训练语料
@@ -26,7 +27,7 @@ class SemEvalCorpus(object):
         self.vocab = None
 
     # 加载数据
-    def load_data(self, filetype):
+    def __load_data(self, filetype):
         #先创建catch文件夹，将转为idx的训练数据保存到其中
         catch_file = os.path.join(self.catch_dir, filetype+'.pkl')
         # 如果文件存在，直接加载，不需要在执行后面的操作
@@ -35,17 +36,20 @@ class SemEvalCorpus(object):
         else:
             self.vocab = self.tokenizer.get_vocab()
             data_file = os.path.join(self.data_dir, filetype+".json")
+            data = []
+            labels = []
             with open(data_file, 'r', encoding='utf-8') as read_file:
                 read_data = json.load(read_file)
                 for i in tqdm(range(len(read_data))):
                     label = read_data[i]['relation']
                     sentence = read_data[i]['sentence']
                     label_idx = self.rel2id[label]
-                    sentence_idx = self.sentence2idx(sentence)
-                    if sentence_idx==False:
-                        print(read_data[i]['idx'])
-                        exit()
-
+                    input_sentence = self.process_sentence(sentence)
+                    data.append(input_sentence)
+                    labels.append(label_idx)
+            input_data = [data, labels]
+            torch.save(input_data, catch_file)
+        return data, labels
 
 
 
@@ -56,7 +60,7 @@ class SemEvalCorpus(object):
                 sent(ids): [CLS] ... $ e1 $ ... # e2 # ... [SEP] [PAD]
                 mask     :   1    3  4  4 4  3  5  5 5  3    2     0
     '''
-    def sentence2idx(self,sentence):
+    def process_sentence(self,sentence):
         sentence_token = []
         sentence_mask = []
         # e1的位置(p11,p12),e2的位置(p21,p22)
@@ -77,16 +81,104 @@ class SemEvalCorpus(object):
                 sentence_token += self.vocab['#']
             else:
                 sentence_token += self.vocab[word]
-        if p11 == -1 or p12 ==-1 or p21==-1 or p22==-1:
-            return False
+
+
+        # 构建sentence_mask
+        sentence_mask = [3] * len(sentence_token)
+        sentence_mask[p11:p12+1] = [4] * (p12-p11+1)
+        sentence_mask[p21:p22+1] = [5] * (p22-p21+1)
+
+
+        # 判断长度
+        if len(sentence_token) > self.max_length-2:
+            sentence_token = sentence_token[:self.max_length-2]
+            sentence_mask = sentence_mask[:self.max_length-2]
+
+
+        #填充PAD
+        pad_length = self.max_length - 2 - len(sentence_token)
+        mask = [1] + sentence_mask + [2] + [0] * pad_length
+        input_ids = self.vocab['[CLS]'] + sentence_token + self.vocab['[SEP]'] + self.vocab['[PAD]'] * pad_length
+
+        assert len(mask) == self.max_length
+        assert len(input_ids) == self.max_length
+
+        unit = np.asarray([input_ids,mask], dtype=np.int64)
+        unit = np.reshape(unit, newshape=[1, 2, self.max_length])
+        return unit
 
 
 
+    def load_corpus(self, filetype):
+        file_list = ['train', 'test', 'dev']
+        if filetype in file_list:
+            return self.__load_data(filetype)
+        else:
+            raise ValueError('mode error!')
 
 
+class SemEvalDataset(Dataset):
+    def __init__(self, data, labels):
+        self.dataset = data
+        self.label = labels
+
+    def __getitem__(self, idx):
+        return self.dataset[idx], self.label[idx]
+
+    def __len__(self):
+        return len(self.label)
+
+
+class SemEvalDataLoader(object):
+    def __init__(self, congig, rel2id):
+        self.config = config
+        self.rel2id = rel2id
+        self.corpus = SemEvalCorpus(config, rel2id)
+
+    def __collate_fn(self, batch):
+        data,label = zip(*batch)
+        data = list(data)
+        label = list(label)
+        data = torch.from_numpy(np.concatenate(data, axis=0))
+        label = torch.Tensor(label)
+        return data,label
+
+
+    def __get_data(self, filetype, shuffle=False):
+        data, labels = self.corpus.load_corpus(filetype)
+        dataset = SemEvalDataset(data, labels)
+        loader = DataLoader(
+            dataset=dataset,
+            batch_size=self.config.batch_size,
+            shuffle=shuffle,
+            num_workers=0,
+            collate_fn=self.__collate_fn
+        )
+        return loader
+
+    def get_train(self):
+        ret = self.__get_data(filetype='train', shuffle=True)
+        print('finish loading train!')
+        return ret
+
+    def get_test(self):
+        ret = self.__get_data(filetype='test', shuffle=True)
+        print('finish loading test!')
+        return ret
+
+    def get_dev(self):
+        ret = self.__get_data(filetype='dev', shuffle=True)
+        print('finish loading dev!')
+        return ret
 
 if __name__ == '__main__':
     config = Config()
     relation_loader = RelationLoader(config)
     sem_eval_corpus = SemEvalCorpus(config, relation_loader)
-    sem_eval_corpus.load_data('train')
+    data, label = sem_eval_corpus.load_corpus('test')
+    sem_eval_corpus = SemEvalDataset(data, label)
+    loader = SemEvalDataLoader(config, relation_loader)
+    ret = loader.get_train()
+    for data in ret:
+        print(data)
+        exit()
