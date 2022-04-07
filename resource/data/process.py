@@ -6,7 +6,8 @@
 
 import json
 import re
-
+import nltk
+from tqdm import tqdm
 '''
 处理数据集，对数据格式进行处理，方便进行训练和测试
 '''
@@ -17,10 +18,24 @@ def split_sentence(sentence):
     e1 = re.findall(r'<e1>(.*)</e1>', sentence)[0]
     e2 = re.findall(r'<e2>(.*)</e2>', sentence)[0]
 
-    sentence = sentence.replace('<e1>'+e1+'</e1>', '<e1> '+e1+' </e1>')
-    sentence = sentence.replace('<e2>'+e2+'</e2>', '<e2> '+e2+' </e2>')
-    sentence = sentence.replace('.', ' .')
-    sentence = sentence.split(' ')
+    sentence = sentence.replace('<e1>'+e1+'</e1>', '<e1> '+e1+' </e1>', 1)
+    sentence = sentence.replace('<e2>'+e2+'</e2>', '<e2> '+e2+' </e2>', 1)
+
+    sentence = nltk.word_tokenize(sentence)
+    sentence = ' '.join(sentence)
+
+    sentence = sentence.replace('< e1 >', '<e1>')
+    sentence = sentence.replace('< /e1 >', '</e1>')
+    sentence = sentence.replace('< e2 >', '<e2>')
+    sentence = sentence.replace('< /e2 >', '</e2>')
+
+    sentence = sentence.split()
+
+
+    assert '<e1>' in sentence
+    assert '</e1>' in sentence
+    assert  '<e2>' in sentence
+    assert  '</e2>' in sentence
     return sentence
 
 
@@ -34,7 +49,7 @@ def convert(file_path, file_name):
     process_data = []
 
     with open(file_name, 'w', encoding='utf-8') as file:
-        for i in range(0, len(data), 4):
+        for i in tqdm(range(0, len(data), 4)):
             temp = {}
             idx, sentence = data[i].strip().split('\t')
             #去除双引号
@@ -58,3 +73,7 @@ if __name__ == '__main__':
 
     convert(tarin_path, 'train.json')
     convert(test_path, 'test.json')
+
+    print("--------------------------")
+    print('data process successful!')
+
