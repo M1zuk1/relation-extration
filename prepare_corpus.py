@@ -18,9 +18,9 @@ from torch.utils.data import Dataset,DataLoader
 构建训练语料
 '''
 class SemEvalCorpus(object):
-    def __init__(self, config, loader):
+    def __init__(self, config, rel2id):
         self.data_dir = config.data_dir
-        self.rel2id, self.id2rel, self.class_num = loader.get_relation()
+        self.rel2id = rel2id
         self.max_length = config.max_length
         self.catch_dir = config.catch_dir
         self.tokenizer = Tokenizer(config)
@@ -130,7 +130,7 @@ class SemEvalDataset(Dataset):
 
 
 class SemEvalDataLoader(object):
-    def __init__(self, congig, rel2id):
+    def __init__(self, config, rel2id):
         self.config = config
         self.rel2id = rel2id
         self.corpus = SemEvalCorpus(config, rel2id)
@@ -140,7 +140,7 @@ class SemEvalDataLoader(object):
         data = list(data)
         label = list(label)
         data = torch.from_numpy(np.concatenate(data, axis=0))
-        label = torch.Tensor(label)
+        label = torch.from_numpy(np.asarray(label, dtype=np.int64))
         return data,label
 
 
