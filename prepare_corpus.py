@@ -167,7 +167,7 @@ class SemEvalDataLoader(object):
         return ret
 
     def get_dev(self):
-        ret = self.__get_data(filetype='dev', shuffle=True)
+        ret = self.__get_data(filetype='test', shuffle=True)
         print('finish loading dev!')
         return ret
 
@@ -181,4 +181,4 @@ if __name__ == '__main__':
     ret = loader.get_train()
     for data in ret:
         print(data)
-        exit()
+    #     exit()
