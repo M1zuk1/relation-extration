@@ -43,7 +43,7 @@ class R_Bert(nn.Module):
 
         self.dense = nn.Linear(
             in_features=self.bert_hidden_size*3,
-            out_features=self.bert_hidden_size,
+            out_features=self.class_num,
             bias=True
         )
 
@@ -109,7 +109,7 @@ class R_Bert(nn.Module):
 
         # 计算损失，torch.nn.CrossEntropyLoss()的input只需要是网络fc层的输出𝑦, 在torch.nn.CrossEntropyLoss()里它会自己把𝑦转化成𝑠𝑜𝑓𝑡𝑚𝑎𝑥(𝑦)
         loss = self.cretrion(logits, label)
-        print(loss)
+
         return loss, logits
 
 
