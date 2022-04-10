@@ -114,7 +114,12 @@ class Runner():
         print('test_loss:{:.3f} | micro f1 on test:{:.4f}' % (test_loss, f1))
         return predict_label
 
-
+def print_result(predict_label, id2rel, start_idx=8001):
+    predict_file = './eval/predict_result.txt'
+    with open(predict_file, 'w', encoding='utf-8') as wf:
+        for i in range(0, predict_label.shape[0]):
+            wf.write('{}\t{}\n'.format(
+                start_idx + i, id2rel[int(predict_label[i])]))
 
 if __name__ == '__main__':
     # 打印配置
@@ -148,8 +153,9 @@ if __name__ == '__main__':
 
     # 训练
     if user_config.mode == 0:
-        runner.test()
-
+        runner.train()
+        predict_label = runner.test()
     # 测试
     elif user_config.mode == 1:
-        runner.test()
+        predict_label = runner.test()
+    print_result(predict_label, id2rel)
