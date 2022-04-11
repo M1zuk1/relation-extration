@@ -23,7 +23,9 @@ class Runner():
         self.loader = loader
         self.user_config = user_config
 
+
         self.model = R_Bert(user_config, self.class_num)
+        # self.model = torch.nn.parallel(self.model)
         self.model = self.model.to(user_config.device)
         self.eval = Eval(user_config)
 
@@ -34,10 +36,10 @@ class Runner():
 
         # id():返回对象的内存地址
         bert_params = list(map(id, self.model.bert.parameters()))
-        for parameter in self.model.bert.parameters():
-            parameter.requires_grad = False
+        # for parameter in self.model.bert.parameters():
+        #     parameter.requires_grad = False
         # 过滤器，过滤掉在bert_params中的参数，lambda表示式为过滤条件
-        # rest_params = filter(lambda p: id(p) not in bert_params, self.model.parameters())
+        rest_params = filter(lambda p: id(p) not in bert_params, self.model.parameters())
         rest_params = filter(lambda p: p.requires_grad, self.model.parameters())
         # Todo: 添加warmup
         # 先不用warmup看看
@@ -55,6 +57,7 @@ class Runner():
         print('----------------------------------------------')
         print('start to train the model......')
         max_f1 = 0.0
+
 
         for epoch in range(1, 1 + self.user_config.epoch):
             self.model.train()
@@ -75,7 +78,7 @@ class Runner():
                 optimizer.step()
 
             train_loss = train_loss / len(data_iterator)
-            f1, eval_loss = self.eval.evaluate(self.model, dev_loader)
+            f1, eval_loss, predict_label = self.eval.evaluate(self.model, dev_loader)
             print('epoch:{}｜ train_loss:{:.3f} | dev_loss:{:.3f} | f1 on dev:{:.4f}'.format(epoch, train_loss, eval_loss, f1))
 
             if f1 > max_f1:
@@ -85,9 +88,11 @@ class Runner():
                 output_config_file = os.path.join(
                     self.user_config.model_dir, CONFIG_NAME)
 
+                # 保存模型
                 model_to_save = self.model.module if hasattr(
                     self.model, 'module') else self.model
                 model_to_save.bert.config.to_json_file(output_config_file)
+                torch.save(model_to_save.state_dict(), output_model_file)
                 print('>>> save models!')
 
 
@@ -109,17 +114,22 @@ class Runner():
 
         print('----------------------------------------------')
         print('start to test......')
-        _,test_loader,_ = self.loader
-        f1, test_loss, predict_label = self.eval_tool.evaluate(self.model, test_loader)
-        print('test_loss:{:.3f} | micro f1 on test:{:.4f}' % (test_loss, f1))
+        _, test_loader, _ = self.loader
+        f1, test_loss, predict_label = self.eval.evaluate(self.model, test_loader)
+        print('test_loss:{:.3f} | micro f1 on test:{:.4f}'.format(test_loss, f1))
         return predict_label
 
 def print_result(predict_label, id2rel, start_idx=8001):
-    predict_file = './eval/predict_result.txt'
-    with open(predict_file, 'w', encoding='utf-8') as wf:
+    predict_dir = './eval'
+    predict_file = 'predicted_result.txt'
+    predict_path = os.path.join(predict_dir, predict_file)
+    if not os.path.exists(predict_dir):
+        os.makedirs(predict_dir)
+    with open(predict_path, 'w', encoding='utf-8') as wf:
         for i in range(0, predict_label.shape[0]):
             wf.write('{}\t{}\n'.format(
                 start_idx + i, id2rel[int(predict_label[i])]))
+
 
 if __name__ == '__main__':
     # 打印配置

@@ -48,7 +48,7 @@ class SemEvalCorpus(object):
                     data.append(input_sentence)
                     labels.append(label_idx)
             input_data = [data, labels]
-            torch.save(input_data, catch_file)
+            torch.save(input_data, catch_file,_use_new_zipfile_serialization=True)
         return data, labels
 
 
@@ -162,12 +162,12 @@ class SemEvalDataLoader(object):
         return ret
 
     def get_test(self):
-        ret = self.__get_data(filetype='test', shuffle=True)
+        ret = self.__get_data(filetype='test', shuffle=False)
         print('finish loading test!')
         return ret
 
     def get_dev(self):
-        ret = self.__get_data(filetype='test', shuffle=True)
+        ret = self.__get_data(filetype='test', shuffle=False)
         print('finish loading dev!')
         return ret
 
@@ -175,10 +175,10 @@ if __name__ == '__main__':
     config = Config()
     relation_loader = RelationLoader(config)
     sem_eval_corpus = SemEvalCorpus(config, relation_loader)
-    data, label = sem_eval_corpus.load_corpus('test')
-    sem_eval_corpus = SemEvalDataset(data, label)
-    loader = SemEvalDataLoader(config, relation_loader)
-    ret = loader.get_train()
-    for data in ret:
-        print(data)
+    data, label = sem_eval_corpus.load_corpus('train')
+    # sem_eval_corpus = SemEvalDataset(data, label)
+    # loader = SemEvalDataLoader(config, relation_loader)
+    # ret = loader.get_train()
+    # for data in ret:
+    #     print(data)
     #     exit()

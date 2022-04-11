@@ -4,7 +4,7 @@
 # datetime： 2022/4/4 17:15 
 # ide： PyCharm
 
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 # author： mizuki
 # datetime： 2022/4/2 23:37
@@ -28,14 +28,15 @@ class Config(object):
         for key in args.__dict__:
             setattr(self, key, args.__dict__[key])
 
-        #选择设备
+        # 选择设备
         self.device = None
-        if torch.cuda.is_available() and self.cuda >= 0:
-            self.device = torch.cuda('cuda:{}'.format(self.cuda))
-        else:
-            self.device = torch.device('cpu')
+        # if torch.cuda.is_available() and self.cuda >= 0:
+        #     self.device = torch.cuda('cuda:{}'.format(self.cuda))
+        # else:
+        #     self.device = torch.device('cpu')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        #参数相关的文件夹，判断是否存在，不存在的话创建
+        # 参数相关的文件夹，判断是否存在，不存在的话创建
 
         # 创建输出的模型文件夹
         self.model_dir = os.path.join(self.output_dir, self.model_name)
@@ -62,35 +63,35 @@ class Config(object):
         # 实例化ArgumentParser
         parser = argparse.ArgumentParser(description="config for model to relation extration")
 
-
         # 添加参数
         parser.add_argument('--data_dir', type=str, default=r'./resource/data', help='direct to load data')
         parser.add_argument('--output_dir', type=str, default=r'./output', help='direct to save output data')
         parser.add_argument('--catch_dir', type=str, default=r'./catch', help='direct to save catch data')
 
-        #添加训练参数
+        # 添加训练参数
         parser.add_argument('--model_name', type=str, default='R-Bert', help="name of the model")
-        parser.add_argument('--mode', type=int, default=0, choices=[0, 1], help='running mode: 0 for training, 1 for testing')
+        parser.add_argument('--mode', type=int, default=0, choices=[0, 1],
+                            help='running mode: 0 for training, 1 for testing')
         parser.add_argument('--seed', type=int, default=1234, help='random seed')
         parser.add_argument('--cuda', type=int, default=0, help='num of gpu device, if -1, select cpu')
 
-        #预训练语言模型相关参数
-        parser.add_argument('--ptlm_root_dir', type=str, default=r'./resource', help='diret to load pre-trained language model')
-        parser.add_argument('--ptlm_name', type=str, default='bert-base-uncased', help='dir of pre-trained language model')
+        # 预训练语言模型相关参数
+        parser.add_argument('--ptlm_root_dir', type=str, default=r'./resource',
+                            help='diret to load pre-trained language model')
+        parser.add_argument('--ptlm_name', type=str, default='bert-base-uncased',
+                            help='dir of pre-trained language model')
 
         # 超参数
         parser.add_argument('--epoch', type=int, default=10, help='max epoches to train the model')
         parser.add_argument('--max_length', type=int, default=128, help='max lengh of the sentence after tokenization')
         parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
         parser.add_argument('--batch_size', type=int, default=16, help='batch size')
-        parser.add_argument('--weight_deca', type = float, default=0.0, help='weight decay')
-        parser.add_argument('--dropout', type=float, default=0.1, help='the possibilty of dropout')
+        parser.add_argument('--weight_deca', type=float, default=0.0, help='weight decay')
+        parser.add_argument('--dropout', type=float, default=0.1, help='the possibility of dropout')
         parser.add_argument('--warmup', type=float, default=0.1, help='proportion of linear warmup over warmup_steps')
-
 
         args = parser.parse_args()
         return args
-
 
     def __store_config(self, args):
         config_store_path = os.path.join(self.model_dir, 'config.json')
@@ -98,8 +99,7 @@ class Config(object):
             config_file.write(json.dumps(vars(args), ensure_ascii=False, indent=4))
         config_file.close()
 
-
-    def __set_random_seed(self,seed=1234):
+    def __set_random_seed(self, seed=1234):
         os.environ['PYTHONHASHSEED'] = str(seed)
         seed = int(seed)
         random.seed(seed)
@@ -114,5 +114,3 @@ class Config(object):
 
 if __name__ == '__main__':
     config = Config()
-
-

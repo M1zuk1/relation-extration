@@ -2,4 +2,6 @@
 /resource/bert-base-uncased/pytorch_model.bin
 /resource/bert-base-uncased/README.md
 /resource/bert-base-uncased/vocab.txt
+/output/R-Bert/config.json
+/output/R-Bert/pytorch_model.bin
 .idea

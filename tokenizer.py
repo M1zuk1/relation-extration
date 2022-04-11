@@ -35,6 +35,7 @@ class Tokenizer(object):
         file_list = ['train', 'test']
         for file_name in file_list:
             file_path = os.path.join(self.data_dir, file_name+'.json')
+
             with open(file_path, 'r', encoding='utf-8') as read_file:
                 data = json.load(read_file)
                 for i in range(len(data)):
