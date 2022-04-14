@@ -8,9 +8,10 @@ import torch
 import torch.nn as nn
 from transformers import BertConfig
 from transformers import BertModel
+
 from config import Config
-from relation_loader import RelationLoader
 from prepare_corpus import SemEvalDataLoader
+from relation_loader import RelationLoader
 
 
 class R_Bert(nn.Module):
@@ -62,9 +63,9 @@ class R_Bert(nn.Module):
     # bert层
     def bert_layer(self,input_ids, attention_mask, token_type_ids):
         output = self.bert(
-            input_ids = input_ids,
-            attention_mask = attention_mask,
-            token_type_ids = token_type_ids
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids
         )
         hidden_output = output[0] # batch*max_len*hidden_size
         pooler_output = output[1] # batch*1

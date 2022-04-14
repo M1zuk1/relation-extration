@@ -4,15 +4,17 @@
 # datetime： 2022/4/5 16:43 
 # ide： PyCharm
 
-import os
 import json
+import os
+
+import numpy as np
 import torch
+from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
+
 from config import Config
 from relation_loader import RelationLoader
 from tokenizer import Tokenizer
-from tqdm import tqdm
-import numpy as np
-from torch.utils.data import Dataset,DataLoader
 
 '''
 构建训练语料

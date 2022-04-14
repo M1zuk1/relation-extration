@@ -5,14 +5,14 @@
 # ide： PyCharm
 
 
+import numpy as np
 import torch
+from tqdm import tqdm
+
 from config import Config
 from model import R_Bert
 from prepare_corpus import SemEvalDataLoader
 from relation_loader import RelationLoader
-from tqdm import tqdm
-import numpy as np
-from sklearn.metrics import f1_score
 
 
 def semeval_scorer(predict_label, true_label, class_num=10):
@@ -82,6 +82,7 @@ class Eval():
                 label = label.cpu().detach().numpy().reshape((-1, 1))
                 predict_label.append(pred)
                 true_label.append(label)
+
             predict_label = np.concatenate(
                 predict_label, axis=0).reshape(-1).astype(np.int64)
             true_label = np.concatenate(

@@ -4,12 +4,12 @@
 # datetime： 2022/4/4 19:49 
 # ide： PyCharm
 
-import os
 import json
+import os
+
 from transformers import BertTokenizer
+
 from config import Config
-
-
 
 
 class Tokenizer(object):
@@ -34,18 +34,16 @@ class Tokenizer(object):
         vocab = set()
         file_list = ['train', 'test']
         for file_name in file_list:
-            file_path = os.path.join(self.data_dir, file_name+'.json')
+            file_path = os.path.join(self.data_dir, file_name + '.json')
 
             with open(file_path, 'r', encoding='utf-8') as read_file:
                 data = json.load(read_file)
                 for i in range(len(data)):
-                   for token in data[i]['sentence']:
-                       if token in ['<e1>', '</e1>', '<e2>', '</e2>']:
-                           continue
-                       vocab.add(token)
+                    for token in data[i]['sentence']:
+                        if token in ['<e1>', '</e1>', '<e2>', '</e2>']:
+                            continue
+                        vocab.add(token)
         return vocab
-
-
 
     # 将vocab中的word切分成subword，然后转化为token_idx
     def get_vocab(self):
@@ -54,7 +52,6 @@ class Tokenizer(object):
         extra_tokens = ['[CLS]', '[SEP]', '[PAD]'] + self.special_tokens
         for token in extra_tokens:
             vocab_dict[token] = [self.tokenizer.convert_tokens_to_ids(token)]
-
 
         for token in vocab_set:
             token = token.lower()
@@ -69,9 +66,6 @@ class Tokenizer(object):
 
             vocab_dict[token] = token_idx_list
         return vocab_dict
-
-
-
 
 
 if __name__ == '__main__':
