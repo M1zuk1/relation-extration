@@ -82,13 +82,16 @@ class Config(object):
                             help='dir of pre-trained language model')
 
         # 超参数
-        parser.add_argument('--epoch', type=int, default=10, help='max epoches to train the model')
+        parser.add_argument('--epoch', type=int, default=100, help='max epoches to train the model')
         parser.add_argument('--max_length', type=int, default=128, help='max lengh of the sentence after tokenization')
-        parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
+        parser.add_argument('--lr', type=float, default=1e-5, help='learning rate in ptlm layer')
+        parser.add_argument('--other_lr', type=float, default=2e-5,
+                            help='learning rate in other layers except ptlm layer')
         parser.add_argument('--batch_size', type=int, default=16, help='batch size')
         parser.add_argument('--weight_deca', type=float, default=0.0, help='weight decay')
         parser.add_argument('--dropout', type=float, default=0.1, help='the possibility of dropout')
         parser.add_argument('--warmup', type=float, default=0.1, help='proportion of linear warmup over warmup_steps')
+        parser.add_argument('--adam_epsilon', type=float, default=1e-8, help='epsilon for Adam optimizer')
 
         args = parser.parse_args()
         return args

@@ -71,4 +71,5 @@ class Tokenizer(object):
 if __name__ == '__main__':
     config = Config()
     tokenizer = Tokenizer(config)
-    tokenizer.get_vocab()
+    print(tokenizer.get_vocab())
+

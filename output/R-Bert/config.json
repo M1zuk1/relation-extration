@@ -8,11 +8,13 @@
     "cuda": 0,
     "ptlm_root_dir": "./resource",
     "ptlm_name": "bert-base-uncased",
-    "epoch": 10,
+    "epoch": 100,
     "max_length": 128,
     "lr": 1e-05,
+    "other_lr": 2e-05,
     "batch_size": 16,
     "weight_deca": 0.0,
     "dropout": 0.1,
-    "warmup": 0.1
+    "warmup": 0.1,
+    "adam_epsilon": 1e-08
 }

@@ -36,19 +36,19 @@ class R_Bert(nn.Module):
             bias=True
         )
 
-        self.entity_mlp =  nn.Linear(
+        self.entity_mlp = nn.Linear(
             in_features=self.bert_hidden_size,
             out_features=self.bert_hidden_size,
             bias=True
         )
 
         self.dense = nn.Linear(
-            in_features=self.bert_hidden_size*3,
+            in_features=self.bert_hidden_size * 3,
             out_features=self.class_num,
             bias=True
         )
 
-        self.cretrion = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss()
         self.init_parameters()
 
     # 初始化模型参数
@@ -61,14 +61,14 @@ class R_Bert(nn.Module):
         nn.init.constant_(self.dense.bias, 0.)
 
     # bert层
-    def bert_layer(self,input_ids, attention_mask, token_type_ids):
+    def bert_layer(self, input_ids, attention_mask, token_type_ids):
         output = self.bert(
             input_ids=input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids
         )
-        hidden_output = output[0] # batch*max_len*hidden_size
-        pooler_output = output[1] # batch*1
+        hidden_output = output[0]  # batch*max_len*hidden_size
+        pooler_output = output[1]  # batch*1
         return hidden_output, pooler_output
 
     # 实体表示求平均
@@ -81,8 +81,8 @@ class R_Bert(nn.Module):
         return avg_reps
 
     def forward(self, data, label):
-        input_ids = data[:,0,:] # batch * max_len
-        mask = data[:,1,:] # batch * max_len
+        input_ids = data[:, 0, :]  # batch * max_len
+        mask = data[:, 1, :]  # batch * max_len
 
         attention_mask = mask.gt(0).float()
         token_type_ids = mask.gt(-1).long()
@@ -107,13 +107,13 @@ class R_Bert(nn.Module):
         reps = self.dropout(reps)
         logits = self.dense(reps)
 
-
-        # 计算损失，torch.nn.CrossEntropyLoss()的input只需要是网络fc层的输出𝑦, 在torch.nn.CrossEntropyLoss()里它会自己把𝑦转化成𝑠𝑜𝑓𝑡𝑚𝑎𝑥(𝑦)
-        loss = self.cretrion(logits, label)
+        '''
+        计算损失，torch.nn.CrossEntropyLoss()的input只需要是网络fc层的输出𝑦, 
+        在torch.nn.CrossEntropyLoss()里它会自己把𝑦转化成𝑠𝑜𝑓𝑡𝑚𝑎𝑥(𝑦)
+        '''
+        loss = self.criterion(logits, label)
 
         return loss, logits
-
-
 
 
 if __name__ == '__main__':
@@ -123,8 +123,8 @@ if __name__ == '__main__':
 
     r_bert = R_Bert(user_config, class_num)
     relation_loader = RelationLoader(user_config)
-    loader = SemEvalDataLoader(user_config, relation_loader)
+    loader = SemEvalDataLoader(user_config, rel2id)
     ret = loader.get_train()
     for data in ret:
-        r_bert(data[0],data[1])
+        r_bert(data[0], data[1])
     # r_bert.forward()

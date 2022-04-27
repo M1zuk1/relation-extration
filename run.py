@@ -4,10 +4,14 @@
 # datetime： 2022/4/7 22:35
 # ide： PyCharm
 import os
+
 import torch
-import torch.optim as optim
+from torch.optim import AdamW
 from tqdm import tqdm
 from transformers import WEIGHTS_NAME, CONFIG_NAME
+from transformers import get_linear_schedule_with_warmup
+from torch.utils.tensorboard import SummaryWriter
+
 from config import Config
 from evaluate import Eval
 from model import R_Bert
@@ -35,12 +39,26 @@ class Runner():
         # id():返回对象的内存地址
         bert_params = list(map(id, self.model.bert.parameters()))
         # 过滤器，过滤掉在bert_params中的参数，lambda表示式为过滤条件
-        # rest_params = filter(lambda p: id(p) not in bert_params, self.model.parameters())
-        rest_params = filter(lambda p: p.requires_grad, self.model.parameters())
-        # Todo: 添加warmup
-        # 先不用warmup看看
-        optimizer = optim.AdamW(self.model.parameters(), lr=self.user_config.lr)
+        rest_params = filter(lambda p: id(p) not in bert_params, self.model.parameters())
+        # rest_params = filter(lambda p: p.requires_grad, self.model.parameters())
 
+        # Bert层和其它层使用不同的学习率进行训练
+        optimizer_grouped_parameters = [
+            {'params': self.model.bert.parameters()},
+            {'params': rest_params, 'lr': self.user_config.other_lr},
+        ]
+
+        optimizer = AdamW(
+            optimizer_grouped_parameters,
+            lr=self.user_config.lr,
+            eps=self.user_config.adam_epsilon
+        )
+        # warmup
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer,
+            num_warmup_steps=warmup_steps,
+            num_training_steps=train_steps
+        )
 
         # 打印模型训练的参数
         print('----------------------------------------------')
@@ -69,13 +87,24 @@ class Runner():
                 loss.backward()
                 train_loss += loss.item()
 
-                # todo:torch.nn.utils.clip_grad_norm,防止梯度爆炸，查看loss情况再决定是否要添加
-
                 optimizer.step()
+                scheduler.step()
 
             train_loss = train_loss / len(data_iterator)
             f1, eval_loss, predict_label = self.eval.evaluate(self.model, dev_loader)
-            print('epoch:{}｜ train_loss:{:.3f} | dev_loss:{:.3f} | f1 on dev:{:.4f}'.format(epoch, train_loss, eval_loss, f1))
+            # 将 train accuracy 保存到 "tensorboard/train" 文件夹
+            log_dir = os.path.join('tensorboard', 'F1-Score')
+            train_writer = SummaryWriter(log_dir=log_dir)
+            # 将 test accuracy 保存到 "tensorboard/test" 文件夹
+            log_dir = os.path.join('tensorboard', 'Eval Loss')
+            test_writer = SummaryWriter(log_dir=log_dir)
+
+            # 绘制
+            train_writer.add_scalar('Train', f1, epoch)
+            test_writer.add_scalar('Train', eval_loss, epoch)
+            print(
+                'epoch:{}｜ train_loss:{:.3f} | dev_loss:{:.3f} | f1 on dev:{:.4f}'.format(epoch, train_loss, eval_loss,
+                                                                                          f1))
 
             if f1 > max_f1:
                 max_f1 = f1
@@ -90,9 +119,6 @@ class Runner():
                 model_to_save.bert.config.to_json_file(output_config_file)
                 torch.save(model_to_save.state_dict(), output_model_file)
                 print('>>> save models!')
-
-
-
 
     def test(self):
         print('----------------------------------------------')
@@ -114,6 +140,7 @@ class Runner():
         f1, test_loss, predict_label = self.eval.evaluate(self.model, test_loader)
         print('test_loss:{:.3f} | micro f1 on test:{:.4f}'.format(test_loss, f1))
         return predict_label
+
 
 def print_result(predict_label, id2rel, start_idx=8001):
     predict_dir = './eval'
