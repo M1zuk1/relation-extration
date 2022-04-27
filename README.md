@@ -11,7 +11,7 @@ Step2：Go to ./resource/data and run `python process.py`. The
 processed data are stored in ./resource/data 
 ## Train Model
 `python run.py | tee -a Train.txt` 
-Train.txt stored the train info
+Train.txt stored the training information
 
 ## Evaluate Model
 Go to ./eval `./semeval2010_task8_scorer-v1.2.pl proposed_answer.txt predicted_result.txt`
